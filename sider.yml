@@ -1,0 +1,9 @@
+linter:
+  rubocop:
+    gems:
+      - name: rubocop-rails
+      - name: rubocop-performance
+  eslint:
+    npm_install: true
+  stylelint:
+    npm_install: true
