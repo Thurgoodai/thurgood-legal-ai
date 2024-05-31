@@ -1,0 +1,52 @@
+import os
+from google.cloud import storage, speech_v1p1beta1 as speech
+
+# Initialize Google Cloud clients
+storage_client = storage.Client()
+speech_client = speech.SpeechClient()
+
+# Set up paths
+bucket_name = 'your-bucket-name'  # Replace with your bucket name
+input_file_name = 'audio-files/IMG_1849.mp3'  # Path in GCS
+output_file_name = 'audio-files/IMG_1849_transcription.txt'  # Desired output file path
+
+# Upload file to Google Cloud Storage
+def upload_to_gcs(local_file_path, bucket_name, gcs_file_path):
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(gcs_file_path)
+    blob.upload_from_filename(local_file_path)
+    print(f'File {local_file_path} uploaded to {gcs_file_path}.')
+
+# Transcribe audio file
+def transcribe_audio(gcs_file_path):
+    audio = speech.RecognitionAudio(uri=f'gs://{bucket_name}/{gcs_file_path}')
+    config = speech.RecognitionConfig(
+        encoding=speech.RecognitionConfig.AudioEncoding.MP3,
+        sample_rate_hertz=16000,
+        language_code='en-US',
+    )
+    
+    response = speech_client.recognize(config=config, audio=audio)
+    return response
+
+# Save transcription to file
+def save_transcription(transcription, output_file_path):
+    with open(output_file_path, 'w') as f:
+        for result in transcription.results:
+            f.write(result.alternatives[0].transcript + '\n')
+    print(f'Transcription saved to {output_file_path}.')
+
+# Main function
+def main():
+    # Upload audio file to GCS
+    gcs_file_path = input_file_name
+    # Assuming the file is already in GCS
+
+    # Transcribe audio file
+    transcription = transcribe_audio(gcs_file_path)
+    
+    # Save transcription to file
+    save_transcription(transcription, output_file_name)
+
+if __name__ == '__main__':
+    main()
